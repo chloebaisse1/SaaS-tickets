@@ -1,7 +1,5 @@
+import Wrapper from "./components/Wrapper"
+
 export default function Home() {
-  return (
-    <div>
-      <button className="btn btn-accent">test</button>
-    </div>
-  )
+  return <Wrapper>dev</Wrapper>
 }
