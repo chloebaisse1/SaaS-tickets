@@ -1,13 +1,15 @@
 "use client"
 import { UserButton, useUser } from "@clerk/nextjs"
-import { AudioWaveform, Menu, X } from "lucide-react"
+import { AudioWaveform, GlobeLock, Menu, Settings, X } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { checkAddUser } from "../actions"
+import { checkAddUser, getCompanyPageName } from "../actions"
+import SettingsModal from "./SettingsModal"
 const Navbar = () => {
   const { user } = useUser()
   const email = user?.primaryEmailAddress?.emailAddress
   const [menuOpen, setMenuOpen] = useState(false)
+  const [pageName, setPageName] = useState<string | null>(null)
 
   const navLinks = [
     { href: "/", label: "Accueil" },
@@ -16,11 +18,28 @@ const Navbar = () => {
 
   const renderLinks = (classNames: string) => (
     <>
+      <button
+        className="btn btn-sm btn-accent btn-circle"
+        onClick={() =>
+          (
+            document.getElementById("my_modal_3") as HTMLDialogElement
+          ).showModal()
+        }
+      >
+        <Settings className="w-4 h-4" />
+      </button>
+
       {navLinks.map(({ href, label }) => (
         <Link href={href} key={href} className={`${classNames} btn-sm`}>
           {label}
         </Link>
       ))}
+
+      {pageName && (
+        <Link href={`/page/${pageName}`} className={`${classNames} btn-sm`}>
+          <GlobeLock className="w-4 h-4" />
+        </Link>
+      )}
     </>
   )
 
@@ -28,6 +47,10 @@ const Navbar = () => {
     const init = async () => {
       if (email && user.fullName) {
         await checkAddUser(email, user.fullName)
+        const pageName = await getCompanyPageName(email)
+        if (pageName) {
+          setPageName(pageName)
+        }
       }
     }
     init()
@@ -72,6 +95,12 @@ const Navbar = () => {
         </div>
         {renderLinks("btn")}
       </div>
+
+      <SettingsModal
+        email={email}
+        pageName={pageName}
+        onPageNameChange={setPageName}
+      />
     </div>
   )
 }
