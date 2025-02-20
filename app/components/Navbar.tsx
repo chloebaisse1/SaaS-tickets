@@ -1,26 +1,37 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react/jsx-key */
 "use client"
 import { UserButton, useUser } from "@clerk/nextjs"
 import { AudioWaveform, Menu, X } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { checkAddUser } from "../actions"
 const Navbar = () => {
   const { user } = useUser()
   const email = user?.primaryEmailAddress?.emailAddress
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const navLinks = [{ href: "/", label: "Accueil" }]
+  const navLinks = [
+    { href: "/", label: "Accueil" },
+    { href: "/services", label: "Vos services" },
+  ]
 
   const renderLinks = (classNames: string) => (
     <>
       {navLinks.map(({ href, label }) => (
-        <Link href={href} className={`${classNames} btn-sm`}>
+        <Link href={href} key={href} className={`${classNames} btn-sm`}>
           {label}
         </Link>
       ))}
     </>
   )
+
+  useEffect(() => {
+    const init = async () => {
+      if (email && user.fullName) {
+        await checkAddUser(email, user.fullName)
+      }
+    }
+    init()
+  }, [email, user])
 
   return (
     <div className="border-b border-base-300 px-5 md:px-[10%] py-4 relative">
