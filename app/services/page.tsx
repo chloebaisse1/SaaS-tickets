@@ -3,9 +3,10 @@
 "use client"
 import { useUser } from "@clerk/nextjs"
 import { Service } from "@prisma/client"
-import { Clock, Trash } from "lucide-react"
+import { Clock, ClockArrowUp, Trash } from "lucide-react"
 import { useEffect, useState } from "react"
 import { createService, deleteServiceById, getServiceByEmail } from "../actions"
+import EmptyState from "../components/EmptyState"
 import Wrapper from "../components/Wrapper"
 
 const page = () => {
@@ -81,7 +82,7 @@ const page = () => {
 
           <span className="label-text">Temps</span>
           <label className="input input-bordered flex items-center input-sm gap-2">
-            Durée
+            <ClockArrowUp className="w-4 h-4" />
             <input
               type="number"
               className="grow"
@@ -106,7 +107,12 @@ const page = () => {
               <span className="loading loading-spinner loading-xs"></span>
             </div>
           ) : services.length === 0 ? (
-            <div></div>
+            <div>
+              <EmptyState
+                message={"Aucun service pour le moment"}
+                IconComponent="Telescope"
+              />
+            </div>
           ) : (
             <div>
               <div className="overflow-x-auto">
