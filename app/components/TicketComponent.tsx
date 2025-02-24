@@ -46,6 +46,14 @@ const TicketComponent: React.FC<TicketComponentProps> = ({
     const hours = Math.floor(waitTimeInMinutes / 60)
     const minutes = Math.floor(waitTimeInMinutes % 60)
     setFormattedRealWaitTime(`${hours}h ${minutes}min`)
+
+    if (totalWaitTime !== 0) {
+      if (waitTimeInMinutes > totalWaitTime) {
+        setWaitTimeStatus("error")
+      } else {
+        setWaitTimeStatus("success")
+      }
+    }
   }, [])
 
   return (
@@ -85,37 +93,61 @@ const TicketComponent: React.FC<TicketComponentProps> = ({
           <span className="badge badge-accent badge-outline">En attente</span>
 
           <ul className="timeline timeline-vertical lg:timeline-horizontal w-full">
-            <li>
-              <div className="timeline-start">Estimé</div>
-              <div className="timeline-middle">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="h-5 w-5"
+            {totalWaitTime !== 0 && (
+              <li>
+                <div className="timeline-start">Estimé</div>
+                <div className="timeline-middle">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className={`h-5 w-5 ${
+                      waitTimeStatus == "success"
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div
+                  className={`timeline-end timeline-box border-2  ${
+                    waitTimeStatus == "success"
+                      ? "border-green-500"
+                      : "border-red-500"
+                  }`}
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="timeline-end timeline-box">
-                {formattedTotalWaitTime}
-              </div>
-              <hr />
-            </li>
+                  {formattedTotalWaitTime}
+                </div>
+                <hr
+                  className={`${
+                    waitTimeStatus == "success" ? "bg-green-500" : "bg-red-500"
+                  }`}
+                />
+              </li>
+            )}
 
             <li>
-              <hr />
+              <hr
+                className={`${
+                  waitTimeStatus == "success" ? "bg-green-500" : "bg-red-500"
+                }`}
+              />
               <div className="timeline-start">Réel</div>
               <div className="timeline-middle">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
-                  className="h-5 w-5"
+                  className={`h-5 w-5 ${
+                    waitTimeStatus == "success"
+                      ? "text-green-500"
+                      : "text-red-500"
+                  }`}
                 >
                   <path
                     fillRule="evenodd"
@@ -124,7 +156,13 @@ const TicketComponent: React.FC<TicketComponentProps> = ({
                   />
                 </svg>
               </div>
-              <div className="timeline-end timeline-box">
+              <div
+                className={`timeline-end timeline-box border-2  ${
+                  waitTimeStatus == "success"
+                    ? "border-green-500"
+                    : "border-red-500"
+                }`}
+              >
                 {formattedRealWaitTime}
               </div>
             </li>
