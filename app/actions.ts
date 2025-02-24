@@ -189,3 +189,49 @@ export async function createTicket(
     console.error(error)
   }
 }
+
+export async function getPendingTicketsByEmail(email: string) {
+  try {
+    const company = await prisma.company.findUnique({
+      where: {
+        email: email,
+      },
+      include: {
+        services: {
+          include: {
+            tickets: {
+              where: {
+                status: {
+                  in: ["PENDING", "CALL", "IN_PROGRESS"],
+                },
+              },
+              orderBy: {
+                createdAt: "asc",
+              },
+              include: {
+                post: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    if (!company) {
+      throw new Error(
+        `Aucune entreprise trouvée avec le nom de la page : ${email}`
+      )
+    }
+
+    const pendingTickets = company.services.flatMap((service) =>
+      service.tickets.map((ticket) => ({
+        ...ticket,
+        serviceName: service.name,
+        avgTime: service.avgTime,
+      }))
+    )
+    return pendingTickets
+  } catch (error) {
+    console.error(error)
+  }
+}
