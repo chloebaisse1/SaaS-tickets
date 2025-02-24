@@ -11,6 +11,7 @@ export default function Home() {
   const { user } = useUser()
   const email = user?.primaryEmailAddress?.emailAddress
   const [tickets, setTickets] = useState<Ticket[]>([])
+  const [countdown, setCountdown] = useState<number>(5)
   const fetchTickets = async () => {
     if (email) {
       try {
@@ -23,9 +24,22 @@ export default function Home() {
       }
     }
   }
+
   useEffect(() => {
     fetchTickets()
   }, [email])
+
+  useEffect(() => {
+    const handleCountdownAndRefresh = () => {
+      if (countdown === 0) {
+        fetchTickets()
+      } else {
+        setCountdown((prevCountdown) => prevCountdown - 1)
+      }
+    }
+    const timeoutId = setTimeout(handleCountdownAndRefresh, 1000)
+    return () => clearTimeout(timeoutId)
+  }, [countdown])
 
   return (
     <Wrapper>
