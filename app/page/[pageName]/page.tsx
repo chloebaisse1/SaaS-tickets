@@ -1,9 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client"
 
-import { createTicket, getServicesByPageName } from "@/app/actions"
+import {
+  createTicket,
+  getServicesByPageName,
+  getTicketsByIds,
+} from "@/app/actions"
+import TicketComponent from "@/app/components/TicketComponent"
+import { Ticket } from "@/type"
 import { Service } from "@prisma/client"
 import { useEffect, useState } from "react"
 
@@ -14,6 +21,9 @@ const page = ({ params }: { params: Promise<{ pageName: string }> }) => {
     null
   )
   const [nameComplete, setNameComplete] = useState<string>("")
+  const [ticketNums, setTicketNums] = useState<any[]>([])
+  const [tickets, setTickets] = useState<Ticket[]>([])
+
   const resolveParamsAndFetchServices = async () => {
     try {
       const resolvedParams = await params
@@ -30,8 +40,31 @@ const page = ({ params }: { params: Promise<{ pageName: string }> }) => {
 
   useEffect(() => {
     resolveParamsAndFetchServices()
+
+    const savedTicketNums = JSON.parse(
+      localStorage.getItem("ticketNums") || "[]"
+    )
+    setTicketNums(savedTicketNums)
+
+    if (savedTicketNums.length > 0) {
+      fetchTicketByIds(savedTicketNums)
+    }
   }, [])
 
+  const fetchTicketByIds = async (ticketNums: any[]) => {
+    try {
+      const fetchedTickets = await getTicketsByIds(ticketNums)
+      const validTickets = fetchedTickets?.filter(
+        (ticket) => ticket.status !== "FINISHED"
+      )
+      const validTicketNums = validTickets?.map((ticket) => ticket.num)
+
+      localStorage.setItem("ticketNums", JSON.stringify(validTicketNums))
+      if (validTickets) setTickets(validTickets)
+    } catch (error) {
+      console.error(error)
+    }
+  }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedServiceId || !nameComplete) {
@@ -46,6 +79,9 @@ const page = ({ params }: { params: Promise<{ pageName: string }> }) => {
       )
       setSelectedServiceId(null)
       setNameComplete("")
+      const updatedTicketNums = [...ticketNums, ticketNum]
+      setTicketNums(updatedTicketNums)
+      localStorage.setItem("ticketNums", JSON.stringify(updatedTicketNums))
     } catch (error) {
       console.error(error)
     }
@@ -91,6 +127,27 @@ const page = ({ params }: { params: Promise<{ pageName: string }> }) => {
             Go
           </button>
         </form>
+
+        <div className="w-full mt-4 md:ml-4 md:mt-0">
+          {tickets.length > 0 && (
+            <div className="grid grid-cols-1 gap-4">
+              {tickets.map((ticket, index) => {
+                const totalWaitTime = tickets
+                  .slice(0, index)
+                  .reduce((acc, prevTicket) => acc + prevTicket.avgTime, 0)
+
+                return (
+                  <TicketComponent
+                    key={ticket.id}
+                    ticket={ticket}
+                    totalWaitTime={totalWaitTime}
+                    index={index}
+                  />
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -223,14 +223,49 @@ export async function getPendingTicketsByEmail(email: string) {
       )
     }
 
-    const pendingTickets = company.services.flatMap((service) =>
+    let pendingTickets = company.services.flatMap((service) =>
       service.tickets.map((ticket) => ({
         ...ticket,
         serviceName: service.name,
         avgTime: service.avgTime,
       }))
     )
+    pendingTickets = pendingTickets.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    )
+
     return pendingTickets
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+export async function getTicketsByIds(ticketNums: any[]) {
+  try {
+    const tickets = await prisma.ticket.findMany({
+      where: {
+        num: {
+          in: ticketNums,
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      include: {
+        service: true,
+        post: true,
+      },
+    })
+
+    if (tickets.length === 0) {
+      throw new Error("Aucuns tickets trouvé")
+    }
+    return tickets.map((ticket) => ({
+      ...ticket,
+      serviceName: ticket.service.name,
+      avgTime: ticket.service.avgTime,
+    }))
   } catch (error) {
     console.error(error)
   }
