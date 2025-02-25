@@ -14,6 +14,7 @@ const Navbar = () => {
   const navLinks = [
     { href: "/", label: "Accueil" },
     { href: "/services", label: "Vos services" },
+    { href: "/post_list", label: "Vos posts" },
   ]
 
   const renderLinks = (classNames: string) => (

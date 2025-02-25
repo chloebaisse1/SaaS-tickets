@@ -23,6 +23,7 @@ const page = ({ params }: { params: Promise<{ pageName: string }> }) => {
   const [nameComplete, setNameComplete] = useState<string>("")
   const [ticketNums, setTicketNums] = useState<any[]>([])
   const [tickets, setTickets] = useState<Ticket[]>([])
+  const [countdown, setCountdown] = useState<number>(5)
 
   const resolveParamsAndFetchServices = async () => {
     try {
@@ -41,13 +42,16 @@ const page = ({ params }: { params: Promise<{ pageName: string }> }) => {
   useEffect(() => {
     resolveParamsAndFetchServices()
 
-    const savedTicketNums = JSON.parse(
-      localStorage.getItem("ticketNums") || "[]"
-    )
-    setTicketNums(savedTicketNums)
+    const ticketNumsFromStorage = localStorage.getItem("ticketNums")
 
-    if (savedTicketNums.length > 0) {
-      fetchTicketByIds(savedTicketNums)
+    if (ticketNumsFromStorage && ticketNumsFromStorage !== "undefined") {
+      const savedTicketNums = JSON.parse(ticketNumsFromStorage)
+      setTicketNums(savedTicketNums)
+      if (savedTicketNums.length > 0) {
+        fetchTicketByIds(savedTicketNums)
+      }
+    } else {
+      setTicketNums([])
     }
   }, [])
 
@@ -86,6 +90,19 @@ const page = ({ params }: { params: Promise<{ pageName: string }> }) => {
       console.error(error)
     }
   }
+
+  useEffect(() => {
+    const handleCountdownAndRefresh = () => {
+      if (countdown === 0) {
+        if (ticketNums.length > 0) fetchTicketByIds(ticketNums)
+        setCountdown(5)
+      } else {
+        setCountdown((prevCountdown) => prevCountdown - 1)
+      }
+    }
+    const timeoutId = setTimeout(handleCountdownAndRefresh, 1000)
+    return () => clearTimeout(timeoutId)
+  }, [countdown])
 
   return (
     <div className="px-5 md:px[10%] mt-8 mb-10">
@@ -129,22 +146,37 @@ const page = ({ params }: { params: Promise<{ pageName: string }> }) => {
         </form>
 
         <div className="w-full mt-4 md:ml-4 md:mt-0">
-          {tickets.length > 0 && (
-            <div className="grid grid-cols-1 gap-4">
-              {tickets.map((ticket, index) => {
-                const totalWaitTime = tickets
-                  .slice(0, index)
-                  .reduce((acc, prevTicket) => acc + prevTicket.avgTime, 0)
+          {tickets.length !== 0 && (
+            <div>
+              <div className="flex justify-between mb-4">
+                <h1 className="text-2xl font-bold">Vos Tickets</h1>
 
-                return (
-                  <TicketComponent
-                    key={ticket.id}
-                    ticket={ticket}
-                    totalWaitTime={totalWaitTime}
-                    index={index}
-                  />
-                )
-              })}
+                <div className="flex items-center">
+                  <span className="relative flex size-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/30 opacity-75"></span>
+                    <span className="relative inline-flex size-3 rounded-full bg-accent"></span>
+                  </span>
+
+                  <div className="ml-2">({countdown}s)</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                {tickets.map((ticket, index) => {
+                  const totalWaitTime = tickets
+                    .slice(0, index)
+                    .reduce((acc, prevTicket) => acc + prevTicket.avgTime, 0)
+
+                  return (
+                    <TicketComponent
+                      key={ticket.id}
+                      ticket={ticket}
+                      totalWaitTime={totalWaitTime}
+                      index={index}
+                    />
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>

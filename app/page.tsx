@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 import { Ticket } from "@/type"
 import { useUser } from "@clerk/nextjs"
