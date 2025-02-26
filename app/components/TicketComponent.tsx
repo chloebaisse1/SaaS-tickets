@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react-hooks/exhaustive-deps */
+
 /* eslint-disable react/no-unescaped-entities */
 import { Ticket } from "@/type"
 import { Loader } from "lucide-react"
@@ -56,7 +56,7 @@ const TicketComponent: React.FC<TicketComponentProps> = ({
         setWaitTimeStatus("success")
       }
     }
-  }, [])
+  }, [ticket, totalWaitTime])
 
   return (
     <div className="border p-5 border-base-300 rounded-xl flex flex-col space-y-2">
