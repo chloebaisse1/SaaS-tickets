@@ -330,3 +330,148 @@ export async function getPostsByCompanyEmail(email: string) {
     console.error(error)
   }
 }
+
+export async function getPostNameById(postId: string) {
+  try {
+    const post = await prisma.post.findUnique({
+      where: {
+        id: postId,
+      },
+      select: {
+        name: true,
+      },
+    })
+    if (post) {
+      return post.name
+    } else {
+      throw new Error("Post non trouvé")
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+export async function getLastTicketByEmail(email: string, idPost: string) {
+  try {
+    const existingTicket = await prisma.ticket.findFirst({
+      where: {
+        postId: idPost,
+        status: {
+          in: ["CALL", "IN_PROGRESS"],
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      include: { service: true, post: true },
+    })
+
+    if (existingTicket && existingTicket.service) {
+      return {
+        ...existingTicket,
+        serviceName: existingTicket.service.name,
+        avgTime: existingTicket.service.avgTime,
+      }
+    }
+
+    const ticket = await prisma.ticket.findFirst({
+      where: {
+        status: "PENDING",
+        service: { company: { email: email } },
+      },
+      orderBy: { createdAt: "desc" },
+      include: { service: true, post: true },
+    })
+
+    if (!ticket || !ticket?.service) return null
+
+    const post = await prisma.post.findUnique({
+      where: {
+        id: idPost,
+      },
+    })
+
+    if (!post) {
+      console.error(`Aucun post trouvé pour l'ID : ${idPost}`)
+      return null
+    }
+
+    const updatedTicket = await prisma.ticket.update({
+      where: { id: ticket.id },
+      data: {
+        status: "CALL",
+        postId: post.id,
+        postName: post.name,
+      },
+      include: { service: true },
+    })
+
+    return {
+      ...updatedTicket,
+      serviceName: updatedTicket?.service.name,
+      avgTime: updatedTicket?.service.avgTime,
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+export async function updateTicketStatus(ticketId: string, newStatus: string) {
+  try {
+    await prisma.ticket.update({
+      where: { id: ticketId },
+      data: { status: newStatus },
+    })
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+export async function get10LstFinishedTicketsByEmail(email: string) {
+  try {
+    const tickets = await prisma.ticket.findMany({
+      where: {
+        status: "FINISHED",
+        service: { company: { email: email } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      include: { service: true, post: true },
+    })
+
+    return tickets.map((ticket) => ({
+      ...ticket,
+      serviceName: ticket.service.name,
+      avgTime: ticket.service.avgTime,
+    }))
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+export async function getTicketStatsByEmail(email: string) {
+  try {
+    const tickets = await prisma.ticket.findMany({
+      where: {
+        service: { company: { email: email } },
+      },
+    })
+    const totalTickets = tickets.length
+    const resolvedTickets = tickets.filter(
+      (ticket) => ticket.status === "FINISHED"
+    ).length
+    const pendingTickets = tickets.filter(
+      (ticket) => ticket.status === "PENDING"
+    ).length
+    return {
+      totalTickets,
+      resolvedTickets,
+      pendingTickets,
+    }
+  } catch (error) {
+    console.error(error)
+    return {
+      totalTickets: 0,
+      resolvedTickets: 0,
+      pendingTickets: 0,
+    }
+  }
+}
